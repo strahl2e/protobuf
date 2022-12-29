@@ -902,6 +902,24 @@ class StringTypeHandler {
 // Messages.
 template <typename Element>
 class RepeatedPtrField final : private internal::RepeatedPtrFieldBase {
+#ifndef PROTOBUF_FUTURE_CONTAINER_STATIC_ASSERTS
+  static_assert(!std::is_const<Element>::value,
+                "We do not support const value types.");
+  static_assert(!std::is_volatile<Element>::value,
+                "We do not support volatile value types.");
+  static_assert(!std::is_pointer<Element>::value,
+                "We do not support pointer value types.");
+  static_assert(!std::is_reference<Element>::value,
+                "We do not support reference value types.");
+#endif  // !PROTOBUF_FUTURE_CONTAINER_STATIC_ASSERTS
+  static constexpr PROTOBUF_ALWAYS_INLINE void StaticValidityCheck() {
+#ifdef PROTOBUF_FUTURE_CONTAINER_STATIC_ASSERTS
+    static_assert(
+        absl::disjunction<internal::is_supported_string_type<Element>,
+                          internal::is_supported_message_type<Element>>::value,
+        "We only support string and Message types in RepeatedPtrField.");
+#endif  // PROTOBUF_FUTURE_CONTAINER_STATIC_ASSERTS
+  }
 
  public:
   constexpr RepeatedPtrField();
@@ -1214,27 +1232,34 @@ class RepeatedPtrField<std::string>::TypeHandler
 
 template <typename Element>
 constexpr RepeatedPtrField<Element>::RepeatedPtrField()
-    : RepeatedPtrFieldBase() {}
+    : RepeatedPtrFieldBase() {
+  StaticValidityCheck();
+}
 
 template <typename Element>
 inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
-    : RepeatedPtrFieldBase(arena) {}
+    : RepeatedPtrFieldBase(arena) {
+  StaticValidityCheck();
+}
 
 template <typename Element>
 inline RepeatedPtrField<Element>::RepeatedPtrField(
     const RepeatedPtrField& other)
     : RepeatedPtrFieldBase() {
+  StaticValidityCheck();
   MergeFrom(other);
 }
 
 template <typename Element>
 template <typename Iter, typename>
 inline RepeatedPtrField<Element>::RepeatedPtrField(Iter begin, Iter end) {
+  StaticValidityCheck();
   Add(begin, end);
 }
 
 template <typename Element>
 RepeatedPtrField<Element>::~RepeatedPtrField() {
+  StaticValidityCheck();
 #ifdef __cpp_if_constexpr
   if constexpr (std::is_base_of<MessageLite, Element>::value) {
 #else

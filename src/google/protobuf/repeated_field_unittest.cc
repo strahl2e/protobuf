@@ -197,11 +197,8 @@ TEST(RepeatedField, ArenaAllocationSizesMatchExpectedValues) {
   // memory.
   // If the allocation size is wrong, ReturnArrayMemory will GOOGLE_ABSL_DCHECK.
   CheckAllocationSizes<RepeatedField<bool>>(false);
-  CheckAllocationSizes<RepeatedField<uint8_t>>(false);
-  CheckAllocationSizes<RepeatedField<uint16_t>>(false);
   CheckAllocationSizes<RepeatedField<uint32_t>>(false);
   CheckAllocationSizes<RepeatedField<uint64_t>>(false);
-  CheckAllocationSizes<RepeatedField<std::pair<uint64_t, uint64_t>>>(false);
 }
 
 template <typename Rep>
