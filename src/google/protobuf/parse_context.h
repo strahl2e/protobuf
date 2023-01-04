@@ -115,7 +115,11 @@ inline void WriteLengthDelimited(uint32_t num, absl::string_view val,
 
 class PROTOBUF_EXPORT EpsCopyInputStream {
  public:
-  enum { kSlopBytes = 16, kMaxCordBytesToCopy = 512 };
+  enum { kSlopBytes = 16, kPatchBufferSize = 32, kMaxCordBytesToCopy = 512 };
+  static_assert(kPatchBufferSize >= kSlopBytes * 2,
+                "Patch buffer needs to be at least large enough to hold all "
+                "the slop bytes from the previous buffer, plus the first "
+                "kSlopBytes from the next buffer.");
 
   explicit EpsCopyInputStream(bool enable_aliasing)
       : aliasing_(enable_aliasing ? kOnPatch : kNoAliasing) {}
@@ -123,7 +127,7 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
   void BackUp(const char* ptr) {
     GOOGLE_ABSL_DCHECK(ptr <= buffer_end_ + kSlopBytes);
     int count;
-    if (next_chunk_ == buffer_) {
+    if (next_chunk_ == patch_buffer_) {
       count = static_cast<int>(buffer_end_ + kSlopBytes - ptr);
     } else {
       count = size_ + static_cast<int>(buffer_end_ - ptr);
@@ -248,21 +252,21 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
     if (flat.size() > kSlopBytes) {
       limit_ = kSlopBytes;
       limit_end_ = buffer_end_ = flat.data() + flat.size() - kSlopBytes;
-      next_chunk_ = buffer_;
+      next_chunk_ = patch_buffer_;
       if (aliasing_ == kOnPatch) aliasing_ = kNoDelta;
       return flat.data();
     } else {
       if (!flat.empty()) {
-        std::memcpy(buffer_, flat.data(), flat.size());
+        std::memcpy(patch_buffer_, flat.data(), flat.size());
       }
       limit_ = 0;
-      limit_end_ = buffer_end_ = buffer_ + flat.size();
+      limit_end_ = buffer_end_ = patch_buffer_ + flat.size();
       next_chunk_ = nullptr;
       if (aliasing_ == kOnPatch) {
         aliasing_ = reinterpret_cast<std::uintptr_t>(flat.data()) -
-                    reinterpret_cast<std::uintptr_t>(buffer_);
+                    reinterpret_cast<std::uintptr_t>(patch_buffer_);
       }
-      return buffer_;
+      return patch_buffer_;
     }
   }
 
@@ -284,7 +288,7 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
   int size_;
   int limit_;  // relative to buffer_end_;
   io::ZeroCopyInputStream* zcis_ = nullptr;
-  char buffer_[2 * kSlopBytes] = {};
+  char patch_buffer_[kPatchBufferSize] = {};
   enum { kNoAliasing = 0, kOnPatch = 1, kNoDelta = 2 };
   std::uintptr_t aliasing_ = kNoAliasing;
   // This variable is used to communicate how the parse ended, in order to
