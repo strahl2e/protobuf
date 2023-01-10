@@ -38,6 +38,7 @@
 #include <array>
 #include <cstdlib>
 #include <functional>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <sstream>
@@ -55,18 +56,22 @@
 #include "absl/hash/hash.h"
 #include "google/protobuf/stubs/logging.h"
 #include "google/protobuf/stubs/logging.h"
+#include "absl/log/check.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "google/protobuf/any.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/descriptor_database.h"
 #include "google/protobuf/dynamic_message.h"
+#include "google/protobuf/extension_declaration_bootstrap.pb.h"
 #include "google/protobuf/generated_message_util.h"
 #include "google/protobuf/io/strtod.h"
 #include "google/protobuf/io/tokenizer.h"
@@ -1870,6 +1875,7 @@ void DescriptorPool::AddUnusedImportTrackFile(absl::string_view file_name,
                                               bool is_error) {
   unused_import_track_files_[file_name] = is_error;
 }
+
 
 void DescriptorPool::ClearUnusedImportTrackFiles() {
   unused_import_track_files_.clear();
@@ -6462,6 +6468,7 @@ void DescriptorBuilder::CrossLinkExtensionRange(
     range->options_ = &ExtensionRangeOptions::default_instance();
   }
 }
+
 
 void DescriptorBuilder::CrossLinkField(FieldDescriptor* field,
                                        const FieldDescriptorProto& proto) {

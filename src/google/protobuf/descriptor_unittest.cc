@@ -45,6 +45,7 @@
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "google/protobuf/unittest.pb.h"
 #include "google/protobuf/unittest_custom_options.pb.h"
 #include "google/protobuf/stubs/common.h"
@@ -58,6 +59,7 @@
 #include <gtest/gtest.h>
 #include "google/protobuf/stubs/logging.h"
 #include "google/protobuf/stubs/logging.h"
+#include "google/protobuf/extension_declaration_bootstrap.pb.h"
 #include "google/protobuf/unittest_lazy_dependencies.pb.h"
 #include "google/protobuf/unittest_lazy_dependencies_custom_option.pb.h"
 #include "google/protobuf/unittest_lazy_dependencies_enum.pb.h"
@@ -3929,6 +3931,18 @@ class ValidationErrorTest : public testing::Test {
     FileDescriptorProto file_proto;
     EXPECT_TRUE(TextFormat::ParseFromString(file_text, &file_proto));
     return GOOGLE_CHECK_NOTNULL(pool_.BuildFile(file_proto));
+  }
+
+  void LoadDescriptorExtensionDeclaration(
+      absl::string_view extendee_message_type,
+      absl::string_view extension_decl_text) {
+    ExtensionDeclarations declarations;
+    ASSERT_TRUE(
+        TextFormat::ParseFromString(extension_decl_text, &declarations));
+    for (auto& ext : declarations.extension()) {
+      ASSERT_TRUE(ext.has_number());
+      pool_.AddExtensionMetadata(extendee_message_type, ext);
+    }
   }
 
   // Parse file_text as a FileDescriptorProto in text format and add it

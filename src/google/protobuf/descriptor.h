@@ -83,6 +83,10 @@
 namespace google {
 namespace protobuf {
 
+// class ExtensionDeclaration;
+class ExtensionDeclarations;
+class ExtensionMetadata;
+
 // Defined in this file.
 class Descriptor;
 class FieldDescriptor;
@@ -2131,6 +2135,10 @@ class PROTOBUF_EXPORT DescriptorPool {
   // Set of files to track for unused imports. The bool value when true means
   // unused imports are treated as errors (and as warnings when false).
   absl::flat_hash_map<std::string, bool> unused_import_track_files_;
+
+  typedef absl::flat_hash_map<int, ExtensionMetadata> ExtensionMetadataMap;
+  absl::flat_hash_map<std::string, ExtensionMetadataMap>
+      extension_declarations_;
 };
 
 
